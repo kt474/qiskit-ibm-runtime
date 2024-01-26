@@ -21,19 +21,18 @@ import warnings
 from io import BytesIO
 import numpy as np
 
+import symengine as sym
+from symengine.lib.symengine_wrapper import (  # pylint: disable = no-name-in-module
+    load_basic,
+)
+
 from qiskit.pulse import library, channels, instructions
 from qiskit.pulse.schedule import ScheduleBlock
-from qiskit.utils import optionals as _optional
 from qiskit.pulse.configuration import Kernel, Discriminator
 from .. import formats, common, type_keys
 from ..exceptions import QpyError
 from . import value
 
-
-if _optional.HAS_SYMENGINE:
-    import symengine as sym
-else:
-    import sympy as sym
 
 
 def _read_channel(file_obj, version):  # type: ignore[no-untyped-def]
@@ -113,25 +112,17 @@ def _read_discriminator(file_obj, version):  # type: ignore[no-untyped-def]
 def _loads_symbolic_expr(expr_bytes, use_symengine=False):  # type: ignore[no-untyped-def]
     if expr_bytes == b"":
         return None
-
+    expr_bytes = zlib.decompress(expr_bytes)
     if use_symengine:
-        _optional.HAS_SYMENGINE.require_now("load a symengine expression")
-        from symengine.lib.symengine_wrapper import (  # pylint: disable=import-outside-toplevel, no-name-in-module
-            load_basic,
-        )
-
-        expr = load_basic(zlib.decompress(expr_bytes))
+        return load_basic(expr_bytes)
 
     else:
         from sympy import parse_expr  # pylint: disable=import-outside-toplevel
 
         expr_txt = zlib.decompress(expr_bytes).decode(common.ENCODE)
         expr = parse_expr(expr_txt)
-        if _optional.HAS_SYMENGINE:
-            from symengine import sympify  # pylint: disable=import-outside-toplevel
 
-            return sympify(expr)
-    return expr
+        return expr
 
 
 def _read_symbolic_pulse(file_obj, version):  # type: ignore[no-untyped-def]
@@ -424,7 +415,6 @@ def _dumps_symbolic_expr(expr, use_symengine):  # type: ignore[no-untyped-def]
         return b""
 
     if use_symengine:
-        _optional.HAS_SYMENGINE.require_now("dump a symengine expression")
         expr_bytes = expr.__reduce__()[1][0]
     else:
         from sympy import srepr, sympify  # pylint: disable=import-outside-toplevel
