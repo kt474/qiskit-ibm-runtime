@@ -30,7 +30,7 @@ from qiskit.pulse import library, channels, instructions
 from qiskit.pulse.schedule import ScheduleBlock
 from qiskit.pulse.configuration import Kernel, Discriminator
 from .. import formats, common, type_keys
-from ..exceptions import QpyError
+from ..exceptions import QpyError, QPYLoadingDeprecatedFeatureWarning
 from . import value
 
 
@@ -172,7 +172,7 @@ def _read_symbolic_pulse(file_obj, version):  # type: ignore[no-untyped-def]
             "Complex amp support for symbolic library pulses will be deprecated. "
             "Once deprecated, library pulses loaded from old QPY files (Terra version < 0.23),"
             " will be converted automatically to float (amp,angle) representation.",
-            PendingDeprecationWarning,
+            QPYLoadingDeprecatedFeatureWarning,
         )
         class_name = "ScalableSymbolicPulse"
 
