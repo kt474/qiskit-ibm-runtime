@@ -235,6 +235,7 @@ def _read_parameter_expression(file_obj):  # type: ignore[no-untyped-def]
     )
     # pylint: disable=import-outside-toplevel
     from sympy.parsing.sympy_parser import parse_expr
+
     expr_ = symengine.sympify(parse_expr(file_obj.read(data.expr_size).decode(common.ENCODE)))
     symbol_map = {}
     for _ in range(data.map_elements):
@@ -366,16 +367,12 @@ def _read_parameter_expression_v3(file_obj, vectors, use_symengine):  # type: ig
     data = formats.PARAMETER_EXPR(
         *struct.unpack(formats.PARAMETER_EXPR_PACK, file_obj.read(formats.PARAMETER_EXPR_SIZE))
     )
-    # pylint: disable=import-outside-toplevel
-    from sympy.parsing.sympy_parser import parse_expr
-
-    # pylint: disable=import-outside-toplevel
-
     payload = file_obj.read(data.expr_size)
     if use_symengine:
         expr_ = load_basic(payload)
     else:
         from sympy.parsing.sympy_parser import parse_expr
+
         expr_ = symengine.sympify(parse_expr(payload.decode(common.ENCODE)))
     symbol_map = {}
     for _ in range(data.map_elements):

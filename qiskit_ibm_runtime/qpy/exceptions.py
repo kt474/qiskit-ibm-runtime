@@ -28,6 +28,7 @@ class IBMQpyError(QpyError, IBMError):
         """Return the message."""
         return repr(self.message)
 
+
 class QPYLoadingDeprecatedFeatureWarning(QiskitWarning):
     """Visible deprecation warning for QPY loading functions without
     a stable point in the call stack."""

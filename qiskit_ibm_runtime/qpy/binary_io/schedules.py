@@ -34,7 +34,6 @@ from ..exceptions import QpyError
 from . import value
 
 
-
 def _read_channel(file_obj, version):  # type: ignore[no-untyped-def]
     type_key = common.read_type_key(file_obj)
     index = value.read_value(file_obj, version, {})
