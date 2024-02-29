@@ -25,7 +25,7 @@ import requests
 from qiskit.providers.backend import Backend
 from qiskit.providers.jobstatus import JobStatus, JOB_FINAL_STATES
 from qiskit.providers.models import BackendProperties
-from qiskit.providers.job import JobV1 as Job
+from qiskit.primitives.base.base_primitive_job import BasePrimitiveJob
 
 # pylint: disable=unused-import,cyclic-import
 
@@ -52,7 +52,7 @@ from .api.client_parameters import ClientParameters
 logger = logging.getLogger(__name__)
 
 
-class RuntimeJob(Job):
+class RuntimeJob(BasePrimitiveJob):
     """Representation of a runtime program execution.
 
     A new ``RuntimeJob`` instance is returned when you call
