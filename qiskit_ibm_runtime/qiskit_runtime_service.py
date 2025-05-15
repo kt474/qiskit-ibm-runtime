@@ -12,6 +12,7 @@
 
 """Qiskit runtime service."""
 
+import time
 import logging
 import traceback
 import warnings
@@ -173,6 +174,7 @@ class QiskitRuntimeService:
             self._api_client = RuntimeClient(self._client_params)
             self._default_instance = False
             self._cached_backend_objs: List[IBMBackend] = []
+            self._len_full_cache = 0
             if self._account.instance:
                 self._default_instance = True
                 self._backend_allowed_list = self._discover_cloud_backends()
@@ -626,6 +628,7 @@ class QiskitRuntimeService:
                 ):
                     backends.append(backend)
         else:
+            # IBM CLOUD
             # if not name:
             if self._client_params.instance != self._account.instance:
                 # reset api client
@@ -639,23 +642,30 @@ class QiskitRuntimeService:
 
                 instance_backends = self._discover_backends_from_instance(instance)
                 for backend_name in instance_backends:
-                    if backend := self._create_backend_obj(
-                        backend_name,
-                        instance=instance,
-                        use_fractional_gates=use_fractional_gates,
-                    ):
-                        backends.append(backend)
+                    self._len_full_cache += 1
+                    if name and backend_name == name:
+                        if backend := self._create_backend_obj(
+                            backend_name,
+                            instance=instance,
+                            use_fractional_gates=use_fractional_gates,
+                        ):
+                            backends.append(backend)
 
             elif self._default_instance:
                 for backend_name in self._backend_allowed_list:
-                    if backend := self._create_backend_obj(
-                        backend_name,
-                        instance=self._account.instance,
-                        use_fractional_gates=use_fractional_gates,
-                    ):
-                        backends.append(backend)
+                    self._len_full_cache += 1
+                    if name and backend_name == name:
+                        if backend := self._create_backend_obj(
+                            backend_name,
+                            instance=self._account.instance,
+                            use_fractional_gates=use_fractional_gates,
+                        ):
+                            backends.append(backend)
             else:
-                if not self._cached_backend_objs:
+                if (
+                    not self._cached_backend_objs
+                    or len(self._cached_backend_objs) != self._len_full_cache
+                ):
                     if not self._all_instances or not self._all_instances[0].get("plan"):
                         if self._region or self._plans_preference:
                             self._all_instances = self._account.list_instances(
@@ -663,6 +673,7 @@ class QiskitRuntimeService:
                             )
                         else:
                             self._all_instances = self._account.list_instances(self._account_id)
+
                     # it would be nice if we could log the account name instea of the id here.
                     logger.warning(
                         "Default instance not set. Searching all available instances in %s account.",
@@ -684,6 +695,7 @@ class QiskitRuntimeService:
 
                     for instance_dict in self._backend_instance_groups:
                         backends_list = instance_dict["backends"]
+                        instance_time = 0
                         for backend_name in backends_list:
                             if backend_name not in unique_backends:
                                 unique_backends.append(backend_name)
@@ -692,12 +704,17 @@ class QiskitRuntimeService:
                                 # different api client - this api client is tied to everything
                                 self._client_params.instance = instance_dict["crn"]
                                 self._api_client = RuntimeClient(self._client_params)
-                                if backend := self._create_backend_obj(
-                                    backend_name,
-                                    instance=instance_dict["crn"],
-                                    use_fractional_gates=use_fractional_gates,
-                                ):
-                                    backends.append(backend)
+                                t0 = time.time()
+                                self._len_full_cache += 1
+
+                                if not name or backend_name == name:
+                                    if backend := self._create_backend_obj(
+                                        backend_name,
+                                        instance=instance_dict["crn"],
+                                        use_fractional_gates=use_fractional_gates,
+                                    ):
+                                        backends.append(backend)
+                                instance_time += time.time() - t0
                     self._cached_backend_objs = backends
                 else:
                     backends = self._cached_backend_objs
@@ -1366,6 +1383,10 @@ class QiskitRuntimeService:
         """
         if self._channel == "ibm_quantum":
             return list(self._hgps.keys())
+        elif not self._all_instances:
+            self._all_instances = self._account.list_instances(
+                self._account_id, include_plan_name=True
+            )
         return [t["crn"] for t in self._all_instances]
 
     @property
