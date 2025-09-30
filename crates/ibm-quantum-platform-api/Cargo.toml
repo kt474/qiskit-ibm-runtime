@@ -1,7 +1,10 @@
 [package]
-name = "rust-api"
-version = "0.1.0"
-edition = "2024"
+name = "ibm-quantum-platform-api"
+version = "0.25.0"
+authors = ["Qiskit Team"]
+description = "Generated API from the Qiskit Runtime API OpenAPI spec"
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 serde = { version = "^1.0", features = ["derive"] }
