@@ -27,7 +27,62 @@ fn list_backends_py(base_url: String, token: String, crn: String) -> PyResult<Ve
     Ok(resp.backends.into_iter().map(|b| b.name).collect())
 }
 
+#[pyfunction]
+fn get_backend_status_py(base_url: String, token: String, backend_id: String) -> PyResult<String> {
+    let config = make_config(&base_url, &token);
+    let rt = tokio::runtime::Runtime::new().unwrap(); // TODO don't use unwrap
+    // let rt = tokio::runtime::Runtime::new()
+    // .map_err(|e| PyRuntimeError::new_err(format!("Tokio runtime error: {e}")))?;
+
+    let resp = rt
+        .block_on(apis::backends_api::get_backend_status(&config, &backend_id, Some("2025-01-01")))
+        .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
+
+    serde_json::to_string(&resp)
+        .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
+}
+
+#[pyfunction]
+fn get_backend_configuration_py(base_url: String, token: String, crn: String, backend_id: String) -> PyResult<String> {
+    let config = make_config(&base_url, &token);
+    let rt = tokio::runtime::Runtime::new().unwrap();
+
+    let resp = rt
+        .block_on(apis::backends_api::get_backend_configuration(
+            &config,
+            &backend_id,
+            &crn,
+            Some("2025-01-01"),
+        ))
+        .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
+
+    serde_json::to_string(&resp)
+        .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
+}
+
+#[pyfunction]
+fn get_backend_properties_py(base_url: String, token: String, crn: String, backend_id: String) -> PyResult<String> {
+    let config = make_config(&base_url, &token);
+    let rt = tokio::runtime::Runtime::new().unwrap();
+
+    let resp = rt
+        .block_on(apis::backends_api::get_backend_properties(
+            &config,
+            &backend_id,
+            &crn,
+            Some("2025-01-01"),
+            None, 
+        ))
+        .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
+
+    serde_json::to_string(&resp)
+        .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
+}
+
 pub fn register(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(list_backends_py, m)?)?;
+    m.add_function(wrap_pyfunction!(get_backend_status_py, m)?)?;
+    m.add_function(wrap_pyfunction!(get_backend_configuration_py, m)?)?;
+    m.add_function(wrap_pyfunction!(get_backend_properties_py, m)?)?;
     Ok(())
 }
