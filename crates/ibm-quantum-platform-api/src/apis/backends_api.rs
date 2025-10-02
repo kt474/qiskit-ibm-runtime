@@ -277,6 +277,7 @@ pub async fn get_backend_properties(
 pub async fn get_backend_status(
     configuration: &configuration::Configuration,
     id: &str,
+    crn: &str,
     ibm_api_version: Option<&str>,
 ) -> Result<models::BackendStatusResponse, Error<GetBackendStatusError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -323,14 +324,16 @@ pub async fn get_backend_status(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
+    // NOTE I modified this, we still need the CRN
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
-        req_builder = req_builder.header("Service-CRN", value);
+        req_builder = req_builder.header("external-service-token", value);
     };
+    req_builder = req_builder.header("Service-CRN", crn);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
