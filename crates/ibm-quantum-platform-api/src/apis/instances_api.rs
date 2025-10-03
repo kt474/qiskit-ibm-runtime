@@ -261,13 +261,16 @@ pub async fn get_usage(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
+    // if let Some(ref apikey) = configuration.api_key {
+    //     let key = apikey.key.clone();
+    //     let value = match apikey.prefix {
+    //         Some(ref prefix) => format!("{} {}", prefix, key),
+    //         None => key,
+    //     };
+    //     req_builder = req_builder.header("Service-CRN", value);
+    // };
+    if let Some(ref crn) = configuration.crn {
+        req_builder = req_builder.header("Service-CRN", crn);
     };
 
     let req = req_builder.build()?;

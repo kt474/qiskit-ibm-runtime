@@ -56,6 +56,10 @@ pub async fn create_session(
     ibm_api_version: Option<&str>,
     create_session_request: Option<models::CreateSessionRequest>,
 ) -> Result<models::CreateSession200Response, Error<CreateSessionError>> {
+
+    dbg!(&configuration);
+    dbg!(&ibm_api_version);
+    dbg!(&create_session_request);
     // add a prefix to parameters to efficiently prevent name collisions
     let p_ibm_api_version = ibm_api_version;
     let p_create_session_request = create_session_request;

@@ -3,7 +3,7 @@ use pyo3::exceptions::PyRuntimeError;
 
 use ibm_quantum_platform_api::{apis, apis::configuration};
 
-fn make_config(base_url: &str, token: &str) -> configuration::Configuration {
+fn make_config(base_url: &str, token: &str, crn: &str) -> configuration::Configuration {
     configuration::Configuration {
         base_path: base_url.to_string(),
         user_agent: Some(String::from("qiskit-ibm-runtime-rust-client")),
@@ -15,12 +15,13 @@ fn make_config(base_url: &str, token: &str) -> configuration::Configuration {
             prefix: Some(String::from("apikey")),           
             key: token.to_string(), 
         }),
+        crn: Some(crn.to_string()),
     }
 }
 
 #[pyfunction]
 pub fn list_backends(base_url: String, token: String, crn: String) -> PyResult<Vec<String>> {
-    let config = make_config(&base_url, &token);
+    let config = make_config(&base_url, &token, &crn);
     let rt = tokio::runtime::Runtime::new()
         .map_err(|e| PyRuntimeError::new_err(format!("Failed to start Tokio runtime: {e}")))?;
 
@@ -32,53 +33,55 @@ pub fn list_backends(base_url: String, token: String, crn: String) -> PyResult<V
 }
 
 #[pyfunction]
-pub fn get_backend_status(base_url: String, token: String, backend_id: String, crn:String) -> PyResult<String> {
-    let config = make_config(&base_url, &token);
+pub fn get_backend_status(base_url: String, token: String, backend: String, crn:String) -> PyResult<String> {
+    let config = make_config(&base_url, &token, &crn);
     let rt = tokio::runtime::Runtime::new()
     .map_err(|e| PyRuntimeError::new_err(format!("Tokio runtime error: {e}")))?;
 
     let resp = rt
-        .block_on(apis::backends_api::get_backend_status(&config, &backend_id, &crn, Some("2025-05-01")))
+        .block_on(apis::backends_api::get_backend_status(&config, &backend, &crn, Some("2025-05-01")))
         .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
 
     serde_json::to_string(&resp)
         .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
 }
 
-// #[pyfunction]
-// fn get_backend_configuration_py(base_url: String, token: String, crn: String, backend_id: String) -> PyResult<String> {
-//     let config = make_config(&base_url, &token);
-//     let rt = tokio::runtime::Runtime::new().unwrap();
+#[pyfunction]
+pub fn get_backend_configuration(base_url: String, token: String, crn: String, backend: String) -> PyResult<String> {
+    let config = make_config(&base_url, &token, &crn);
+    let rt = tokio::runtime::Runtime::new()
+    .map_err(|e| PyRuntimeError::new_err(format!("Tokio runtime error: {e}")))?;
 
-//     let resp = rt
-//         .block_on(apis::backends_api::get_backend_configuration(
-//             &config,
-//             &backend_id,
-//             &crn,
-//             Some("2025-01-01"),
-//         ))
-//         .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
+    let resp = rt
+        .block_on(apis::backends_api::get_backend_configuration(
+            &config,
+            &backend,
+            &crn,
+            Some("2025-05-01"),
+        ))
+        .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
 
-//     serde_json::to_string(&resp)
-//         .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
-// }
+    serde_json::to_string(&resp)
+        .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
+}
 
-// #[pyfunction]
-// fn get_backend_properties_py(base_url: String, token: String, crn: String, backend_id: String) -> PyResult<String> {
-//     let config = make_config(&base_url, &token);
-//     let rt = tokio::runtime::Runtime::new().unwrap();
+#[pyfunction]
+pub fn get_backend_properties(base_url: String, token: String, crn: String, backend: String) -> PyResult<String> {
+    let config = make_config(&base_url, &token, &crn);
+    let rt = tokio::runtime::Runtime::new()
+    .map_err(|e| PyRuntimeError::new_err(format!("Tokio runtime error: {e}")))?;
 
-//     let resp = rt
-//         .block_on(apis::backends_api::get_backend_properties(
-//             &config,
-//             &backend_id,
-//             &crn,
-//             Some("2025-01-01"),
-//             None, 
-//         ))
-//         .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
+    let resp = rt
+        .block_on(apis::backends_api::get_backend_properties(
+            &config,
+            &backend,
+            &crn,
+            Some("2025-01-01"),
+            None, 
+        ))
+        .map_err(|e| PyRuntimeError::new_err(format!("API error: {e}")))?;
 
-//     serde_json::to_string(&resp)
-//         .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
-// }
+    serde_json::to_string(&resp)
+        .map_err(|e| PyRuntimeError::new_err(format!("Serialization failed: {e}")))
+}
 
