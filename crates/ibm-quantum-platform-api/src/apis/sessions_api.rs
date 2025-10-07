@@ -57,9 +57,6 @@ pub async fn create_session(
     create_session_request: Option<models::CreateSessionRequest>,
 ) -> Result<models::CreateSession200Response, Error<CreateSessionError>> {
 
-    dbg!(&configuration);
-    dbg!(&ibm_api_version);
-    dbg!(&create_session_request);
     // add a prefix to parameters to efficiently prevent name collisions
     let p_ibm_api_version = ibm_api_version;
     let p_create_session_request = create_session_request;
@@ -102,13 +99,9 @@ pub async fn create_session(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
+    // Kevin changed this
+    if let Some(ref crn) = configuration.crn {
+        req_builder = req_builder.header("Service-CRN", crn);
     };
     req_builder = req_builder.json(&p_create_session_request);
 
@@ -185,21 +178,9 @@ pub async fn delete_session_close(
         };
         req_builder = req_builder.header("Backend-Authentication", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("external-service-token", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
+    // Kevin changed this
+    if let Some(ref crn) = configuration.crn {
+        req_builder = req_builder.header("Service-CRN", crn);
     };
 
     let req = req_builder.build()?;

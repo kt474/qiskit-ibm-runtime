@@ -19,6 +19,26 @@ fn make_config(base_url: &str, token: &str, crn: &str) -> configuration::Configu
 }
 
 #[pyfunction]
+pub fn delete_session(base_url: String, token: String, crn: String, id: String) -> PyResult<String> {
+    let config = make_config(&base_url, &token, &crn);
+
+    let rt = tokio::runtime::Runtime::new()
+        .map_err(|e| PyRuntimeError::new_err(format!("Tokio runtime error: {e}")))?;
+
+    let resp = rt
+        .block_on(apis::sessions_api::delete_session_close(
+            &config,
+            &id,
+            Some("2025-05-01"),
+        ))
+        .map_err(|e| PyRuntimeError::new_err(format!("API call failed: {e:?}")))?;
+    
+    serde_json::to_string_pretty(&resp)
+        .map_err(|e| PyRuntimeError::new_err(format!("JSON serialization failed: {e}")))
+
+}
+
+#[pyfunction]
 pub fn create_session(
     base_url: String,
     token: String,
@@ -45,8 +65,6 @@ pub fn create_session(
         Box::new(request_one_of)
     );
 
-    dbg!(&request);
-
     let rt = tokio::runtime::Runtime::new()
         .map_err(|e| PyRuntimeError::new_err(format!("Tokio runtime error: {e}")))?;
 
@@ -58,7 +76,6 @@ pub fn create_session(
         ))
         .map_err(|e| PyRuntimeError::new_err(format!("API call failed: {e:?}")))?;
     
-    dbg!(&resp);
     serde_json::to_string_pretty(&resp)
         .map_err(|e| PyRuntimeError::new_err(format!("JSON serialization failed: {e}")))
 }
