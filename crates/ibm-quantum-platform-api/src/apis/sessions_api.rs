@@ -251,13 +251,9 @@ pub async fn get_session_information(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
+    // Kevin changed this
+    if let Some(ref crn) = configuration.crn {
+        req_builder = req_builder.header("Service-CRN", crn);
     };
 
     let req = req_builder.build()?;
@@ -343,13 +339,10 @@ pub async fn update_session_state(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
+    
+    // Kevin changed this
+    if let Some(ref crn) = configuration.crn {
+        req_builder = req_builder.header("Service-CRN", crn);
     };
     req_builder = req_builder.json(&p_update_session_state_request);
 
