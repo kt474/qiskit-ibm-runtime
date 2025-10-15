@@ -345,26 +345,31 @@ class CloudAccount(Account):
             items = result.get("items", [])
             for item in items:
                 # don't add instances without backend allocation
-                allocations = item.get("doc", {}).get("extensions")
-                if allocations:
-                    catalog_result = catalog.get_catalog_entry(
-                        id=item.get("service_plan_unique_id")
-                    ).get_result()
-                    plan_name = (
-                        catalog_result.get("overview_ui", {}).get("en", {}).get("display_name", "")
-                    )
-                    pricing_type = (
-                        catalog_result.get("metadata", {}).get("pricing", {}).get("type", "")
-                    )
-                    crns.append(
-                        {
-                            "crn": item.get("crn"),
-                            "plan": plan_name.lower(),
-                            "name": item.get("name"),
-                            "tags": item.get("tags"),
-                            "pricing_type": pricing_type.lower(),
-                        }
-                    )
+                try:
+                    allocations = item.get("doc", {}).get("extensions")
+                    if allocations:
+                        catalog_result = catalog.get_catalog_entry(
+                            id=item.get("service_plan_unique_id")
+                        ).get_result()
+                        plan_name = (
+                            catalog_result.get("overview_ui", {})
+                            .get("en", {})
+                            .get("display_name", "")
+                        )
+                        pricing_type = (
+                            catalog_result.get("metadata", {}).get("pricing", {}).get("type", "")
+                        )
+                        crns.append(
+                            {
+                                "crn": item.get("crn"),
+                                "plan": plan_name.lower(),
+                                "name": item.get("name"),
+                                "tags": item.get("tags"),
+                                "pricing_type": pricing_type.lower(),
+                            }
+                        )
+                except Exception as ex:  # pylint: disable=broad-except
+                    logger.warning("Unable to retrieve instance data: %s %s", item.get("crn"), ex)
 
             all_crns.extend(crns)
             search_cursor = result.get("search_cursor")
